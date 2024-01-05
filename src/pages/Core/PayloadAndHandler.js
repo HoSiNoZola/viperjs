@@ -6,7 +6,6 @@ import {
   postMsgrpcHandlerAPI,
   postMsgrpcPayloadAPI
 } from "@/services/apiv1";
-import styles from "./PayloadAndHandler.less";
 import { DocIcon, randomstr } from "@/pages/Core/Common";
 import {
   Alert,
@@ -33,6 +32,8 @@ import { BlockOutlined, CustomerServiceOutlined, SyncOutlined, SaveOutlined } fr
 import { useRequest } from "umi";
 import { formatText } from "@/utils/locales";
 import { sessionTagList } from "@/pages/Core/HostAndSession";
+import { cssCalc, Downheight } from "@/utils/utils";
+import { useModel } from "@@/plugin-model/useModel";
 
 const { Panel } = Collapse;
 const { Option } = Select;
@@ -46,6 +47,10 @@ const CreateHandlerModalContent = props => {
   const formLayout = {
     labelCol: { span: 6 },
     wrapperCol: { span: 14 }
+  };
+  const shortFormLayout = {
+    labelCol: { span: 6 },
+    wrapperCol: { span: 4 }
   };
   const CommformLayout = {
     labelCol: { span: 4 },
@@ -393,6 +398,73 @@ const CreateHandlerModalContent = props => {
       ]
     },
     {
+      value: "osx",
+      label: "osx",
+      children: [
+        {
+          value: "x64",
+          label: "x64",
+          children: [
+            {
+              value: "meterpreter",
+              label: "meterpreter",
+              children: [
+                {
+                  value: "bind_tcp",
+                  label: "bind_tcp"
+                },
+                {
+                  value: "reverse_tcp",
+                  label: "reverse_tcp"
+                }
+              ]
+            },
+
+            {
+              value: "meterpreter_reverse_http",
+              label: "meterpreter_reverse_http"
+            },
+            {
+              value: "meterpreter_reverse_https",
+              label: "meterpreter_reverse_https"
+            },
+            {
+              value: "meterpreter_reverse_tcp",
+              label: "meterpreter_reverse_tcp"
+            }
+          ]
+        },
+        {
+          value: "aarch64",
+          label: "aarch64",
+          children: [
+            {
+              value: "meterpreter",
+              label: "meterpreter",
+              children: [
+                {
+                  value: "reverse_tcp",
+                  label: "reverse_tcp"
+                }
+              ]
+            },
+            {
+              value: "meterpreter_reverse_http",
+              label: "meterpreter_reverse_http"
+            },
+            {
+              value: "meterpreter_reverse_https",
+              label: "meterpreter_reverse_https"
+            },
+            {
+              value: "meterpreter_reverse_tcp",
+              label: "meterpreter_reverse_tcp"
+            }
+          ]
+        }
+      ]
+    },
+    {
       value: "php",
       label: "php",
       children: [
@@ -565,7 +637,53 @@ const CreateHandlerModalContent = props => {
     }
   };
 
+  const handlerPayloadComnOption = () => {
+    let options = [];
+    if (selectPayload === null || selectPayload === undefined) {
+      return null;
+    }
+    if (~selectPayload.includes("reverse_dns")) {
+      let selectOptions = [];
+      for (let uuid in sessionDict) {
+        let session = sessionDict[uuid];
+        selectOptions.push(
+          <Radio value={session.id}>{sessionTagList(session)}</Radio>
+        );
+      }
 
+      options.push(<Form.Item
+          {...CommformLayout}
+          label={formatText("app.payloadandhandler.comm_label")}
+          tooltip={formatText("app.payloadandhandler.comm_tip")}
+          name="ReverseListenerComm"
+        >
+          <Radio.Group onChange={(e) => {
+            for (let uuid in sessionDict) {
+              let session = sessionDict[uuid];
+              if (session.id === e.target.value) {
+                form.setFieldsValue({ LHOST: session.session_host });
+              }
+            }
+
+          }}>
+            <Space direction="vertical">
+              {selectOptions}
+            </Space>
+          </Radio.Group>
+        </Form.Item>
+      );
+    }
+
+    if (options.length === 0) {
+      return null;
+    } else {
+      return (
+        <Panel header={formatText("app.payloadandhandler.comm")} key="Comm">
+          {options}
+        </Panel>
+      );
+    }
+  };
   const handlerPayloadWarnOption = () => {
 
     let options = [];
@@ -643,6 +761,72 @@ const CreateHandlerModalContent = props => {
               <Option value={`/root/.msf4/loot/${encoder}`}>{encoder}</Option>
             ))}
           </Select>
+        </Form.Item>
+      );
+      options.push(
+        <Form.Item
+          {...shortFormLayout}
+          label={formatText("app.payloadandhandler.ssl_version")}
+          tooltip={formatText("app.payloadandhandler.ssl_version_tip")}
+          initialValue="Auto"
+          name="SSLVersion"
+        >
+          <Select
+            defaultValue="Auto"
+            options={[
+              {
+                value: "Auto",
+                label: "Auto"
+              },
+              {
+                value: "TLS",
+                label: "TLS"
+              },
+              {
+                value: "SSL23",
+                label: "SSL23"
+              },
+              {
+                value: "SSL3",
+                label: "SSL3"
+              },
+              {
+                value: "TLS1",
+                label: "TLS1"
+              },
+              {
+                value: "TLS1.1",
+                label: "TLS1.1"
+              },
+              {
+                value: "TLS1.2",
+                label: "TLS1.2"
+              }
+            ]}
+          />
+        </Form.Item>
+      );
+      options.push(
+        <Form.Item
+          {...formLayout}
+          label={formatText("app.payloadandhandler.sslcipher")}
+          tooltip={formatText("app.payloadandhandler.sslcipher_tip")}
+          name="SSLCipher"
+          initialValue={null}
+        >
+          <Select
+            allowClear
+            options={[
+              {
+                value: "DHE-RSA-AES256-SHA",
+                label: "DHE-RSA-AES256-SHA"
+              },
+              {
+                value: "DHE-DSS-AES256-SHA",
+                label: "DHE-DSS-AES256-SHA"
+              }
+            ]}
+          />
         </Form.Item>
       );
       options.push(
@@ -912,47 +1096,34 @@ const CreateHandlerModalContent = props => {
   };
 
 
-  const handlerPayloadComnOption = () => {
-    let options = [];
+  const handlerMeterpreterDebugLogging = () => {
     if (selectPayload === null || selectPayload === undefined) {
       return null;
     }
-    if (~selectPayload.includes("reverse_dns")) {
-      let selectOptions = [];
-      for (let uuid in sessionDict) {
-        let session = sessionDict[uuid];
-        selectOptions.push(
-          <Radio value={session}>{sessionTagList(session)}</Radio>
-        );
-      }
-
-      options.push(<Form.Item
-          {...CommformLayout}
-          label={formatText("app.payloadandhandler.comm_label")}
-          tooltip={formatText("app.payloadandhandler.comm_tip")}
-          name="ReverseListenerComm"
-        >
-          <Radio.Group onChange={(e) => {
-            form.setFieldsValue({ LHOST: e.target.value.session_host });
-          }}>
-            <Space direction="vertical">
-              {selectOptions}
-            </Space>
-          </Radio.Group>
-        </Form.Item>
-      );
-    }
-
-    if (options.length === 0) {
-      return null;
+    if (selectPayload.includes("reverse")) {
+      return <Form.Item
+        {...formLayout}
+        label="MeterpreterDebugLogging"
+        name="MeterpreterDebugLogging"
+        rules={[]}
+        initialValue="rpath:C:/Windows/Temp/foo.txt"
+      >
+        <Input placeholder="rpath:C:/Windows/Temp/foo.txt rpath:/tmp/foo.txt" />
+      </Form.Item>;
     } else {
-      return (
-        <Panel header={formatText("app.payloadandhandler.comm")} key="Comm">
-          {options}
-        </Panel>
-      );
+      return <Form.Item
+        {...formLayout}
+        label="MeterpreterDebugLogging"
+        name="MeterpreterDebugLogging"
+        rules={[]}
+        initialValue="rpath:/tmp/foo.txt"
+      >
+        <Input placeholder="rpath:C:/Windows/Temp/foo.txt rpath:/tmp/foo.txt" />
+      </Form.Item>;
     }
   };
+
+
   return (
     <Form
       form={form}
@@ -1008,6 +1179,7 @@ const CreateHandlerModalContent = props => {
           </Form.Item>
           {handlerPayloadWarnOption()}
         </Panel>
+
         {handlerPayloadComnOption()}
         {handlerPayloadSpecialOption()}
         <Panel header={formatText("app.payloadandhandler.auto")} key="auto">
@@ -1075,7 +1247,7 @@ const CreateHandlerModalContent = props => {
             label={formatText("app.payloadandhandler.SessionCommunicationTimeout")}
             name="SessionCommunicationTimeout"
             rules={[]}
-            initialValue={60*5}
+            initialValue={60 * 5}
           >
             <InputNumber
               style={{ width: 160 }} />
@@ -1147,6 +1319,16 @@ const CreateHandlerModalContent = props => {
               </Form.Item>
             </Input.Group>
           </Form.Item>
+          <Form.Item
+            {...formLayout}
+            label="MeterpreterDebugBuild"
+            name="MeterpreterDebugBuild"
+            valuePropName="checked"
+            rules={[]}
+          >
+            <Checkbox />
+          </Form.Item>
+          {handlerMeterpreterDebugLogging()}
         </Panel>
       </Collapse>
       <Form.Item style={{ marginTop: 24 }} {...buttonLayout}>
@@ -1493,6 +1675,73 @@ const CreatePayloadModalContent = props => {
         {
           value: "meterpreter_reverse_tcp",
           label: "meterpreter_reverse_tcp"
+        }
+      ]
+    },
+    {
+      value: "osx",
+      label: "osx",
+      children: [
+        {
+          value: "x64",
+          label: "x64",
+          children: [
+            {
+              value: "meterpreter",
+              label: "meterpreter",
+              children: [
+                {
+                  value: "bind_tcp",
+                  label: "bind_tcp"
+                },
+                {
+                  value: "reverse_tcp",
+                  label: "reverse_tcp"
+                }
+              ]
+            },
+
+            {
+              value: "meterpreter_reverse_http",
+              label: "meterpreter_reverse_http"
+            },
+            {
+              value: "meterpreter_reverse_https",
+              label: "meterpreter_reverse_https"
+            },
+            {
+              value: "meterpreter_reverse_tcp",
+              label: "meterpreter_reverse_tcp"
+            }
+          ]
+        },
+        {
+          value: "aarch64",
+          label: "aarch64",
+          children: [
+            {
+              value: "meterpreter",
+              label: "meterpreter",
+              children: [
+                {
+                  value: "reverse_tcp",
+                  label: "reverse_tcp"
+                }
+              ]
+            },
+            {
+              value: "meterpreter_reverse_http",
+              label: "meterpreter_reverse_http"
+            },
+            {
+              value: "meterpreter_reverse_https",
+              label: "meterpreter_reverse_https"
+            },
+            {
+              value: "meterpreter_reverse_tcp",
+              label: "meterpreter_reverse_tcp"
+            }
+          ]
         }
       ]
     },
@@ -2160,7 +2409,7 @@ const CreatePayloadModalContent = props => {
             label={formatText("app.payloadandhandler.SessionCommunicationTimeout")}
             name="SessionCommunicationTimeout"
             rules={[]}
-            initialValue={60*5}
+            initialValue={60 * 5}
           >
             <InputNumber style={{ width: 160 }} />
           </Form.Item>
@@ -2345,8 +2594,11 @@ const PayloadAndHandler = (props) => {
   const [createHandlerModalVisible, setCreateHandlerModalVisible] = useState(false);
   const [createPayloadModalVisible, setCreatePayloadModalVisible] = useState(false);
   const [handlerListActive, setHandlerListActive] = useState([]);
-  const [genPayloadByHandlerVisible, setGenPayloadByHandlerVisible] = useState(false);
-
+  const {
+    resizeDownHeight
+  } = useModel("Resize", model => ({
+    resizeDownHeight: model.resizeDownHeight
+  }));
   const listHanderReq = useRequest(getMsgrpcHandlerAPI, {
     manual: true,
     onSuccess: (result, params) => {
@@ -2461,7 +2713,13 @@ const PayloadAndHandler = (props) => {
         </Col>
       </Row>
       <Table
-        className={styles.handlerTable}
+        style={{
+          marginTop: 0,
+          padding: "0 0 0 0",
+          overflow: "auto",
+          maxHeight: cssCalc(`${resizeDownHeight} - 32px`),
+          minHeight: cssCalc(`${resizeDownHeight} - 32px`)
+        }}
         size="small"
         bordered
         pagination={false}
@@ -2659,4 +2917,3 @@ const PayloadAndHandler = (props) => {
   );
 };
 export const PayloadAndHandlerMemo = memo(PayloadAndHandler);
-export default PayloadAndHandler;

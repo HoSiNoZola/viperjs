@@ -18,7 +18,6 @@ import {
   Alert, Avatar, Button, Col, Form, Input, InputNumber, Modal, Radio, Row, Select, Space, Table, Tag
 } from "antd";
 import { DocIcon, SidTag } from "@/pages/Core/Common";
-import styles from "./MsfSocks.less";
 import {
   deleteCoreHostAPI,
   deleteMsgrpcPortFwdAPI,
@@ -33,16 +32,10 @@ import copy from "copy-to-clipboard";
 import { useRequest } from "umi";
 import moment from "moment";
 import { formatText, msgsuccess } from "@/utils/locales";
+import { cssCalc, Downheight } from "@/utils/utils";
+import { useModel } from "@@/plugin-model/useModel";
 
 const { Option } = Select;
-
-//字符串格式化函数
-String.prototype.format = function() {
-  let args = arguments;
-  return this.replace(/\{(\d+)\}/g, function(m, i) {
-    return args[i];
-  });
-};
 
 const host_type_to_avatar = {
   ad_server: (<Avatar
@@ -92,7 +85,11 @@ const MsfSocks = () => {
   const [routeAll, setRouteAll] = useState([]);
   const [portfwds, setPortfwds] = useState([]);
   const [hostsRoute, setHostsRoute] = useState([]);
-
+  const {
+    resizeDownHeight,
+  } = useModel("Resize", model => ({
+    resizeDownHeight: model.resizeDownHeight,
+  }));
 
   useRequest(getCoreHostAPI, {
     onSuccess: (result, params) => {
@@ -312,8 +309,12 @@ const MsfSocks = () => {
           </Col>
         </Row>
         <Table
-          style={{ marginTop: 0 }}
-          className={styles.muitHostsTable}
+          style={{
+            marginTop: 0,
+            overflow: "auto",
+            maxHeight: cssCalc(`${resizeDownHeight} - 68px`),
+            minHeight: cssCalc(`${resizeDownHeight} - 68px`)
+          }}
           size="small"
           bordered
           pagination={false}
@@ -403,7 +404,11 @@ const MsfSocks = () => {
             >{formatText("app.core.refresh")}</Button>
             <Table
               bordered
-              className={styles.proxyTable}
+              style={{
+                overflow: "auto",
+                maxHeight: cssCalc(`${resizeDownHeight} - 68px - 25vh`),
+                minHeight: cssCalc(`${resizeDownHeight} - 68px - 25vh`)
+              }}
               size="small"
               rowKey="subnet"
               pagination={false}
@@ -438,7 +443,11 @@ const MsfSocks = () => {
             </Button>
             <Table
               bordered
-              className={styles.routesTable}
+              style={{
+                overflow: "auto",
+                maxHeight: cssCalc(`${resizeDownHeight} - 68px - 25vh`),
+                minHeight: cssCalc(`${resizeDownHeight} - 68px - 25vh`)
+              }}
               size="small"
               rowKey="port"
               pagination={false}
@@ -458,8 +467,12 @@ const MsfSocks = () => {
           </Col>
         </Row>
         <Table
-          style={{ marginTop: -16 }}
-          className={styles.portfwdTable}
+          style={{
+            marginTop: -16,
+            overflow: "auto",
+            maxHeight: cssCalc("25vh"),
+            minHeight: cssCalc("25vh")
+          }}
           bordered
           size="small"
           rowKey="index"

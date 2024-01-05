@@ -1,19 +1,13 @@
 import React, { memo } from "react";
 import { useModel } from "umi";
-import styles from "./Network.less";
 import Graphin, { Behaviors, Utils } from "@antv/graphin";
 import "./iconfont.css";
 import fonts from "./iconfont.json";
 import { formatText } from "@/utils/locales";
-import { useLocalStorageState } from "_ahooks@2.10.14@ahooks";
+import { useLocalStorageState } from "ahooks";
 import { DocIcon } from "@/pages/Core/Common";
-//字符串格式化函数
-String.prototype.format = function() {
-  let args = arguments;
-  return this.replace(/\{(\d+)\}/g, function(m, i) {
-    return args[i];
-  });
-};
+import { cssCalc, Downheight } from "@/utils/utils";
+
 
 const { ActivateRelations, FitView } = Behaviors;
 const iconLoader = () => {
@@ -31,6 +25,11 @@ const Network = () => {
 
   const { networkData } = useModel("HostAndSessionModel", model => ({
     networkData: model.networkData
+  }));
+  const {
+    resizeDownHeight,
+  } = useModel("Resize", model => ({
+    resizeDownHeight: model.resizeDownHeight,
   }));
   const [onlyShowSession, setOnlyShowSession] = useLocalStorageState("only-show-session", false);
   const ranksepFunc = node => {
@@ -248,11 +247,13 @@ const Network = () => {
   return (
     <div
       style={{
-        marginTop: -16
+        marginTop: -16,
+        height: cssCalc(`${resizeDownHeight}`),
       }}
-      className={styles.networkCard}>
+    >
       <DocIcon url="https://www.yuque.com/vipersec/help/eoign5" />
       <Graphin
+        fitView={true}
         data={data}
         theme={{ mode: "dark" }}
         layout={{
@@ -403,6 +404,12 @@ const NetworkWindow = () => {
           keyshape: {
             stroke: "#138585",
             lineWidth: 4
+          },
+          animate: {
+            type: "circle-running",
+            color: "#33bcb7",
+            repeat: true,
+            duration: 4000
           }
         };
       } else if (type === "route") {
@@ -446,6 +453,25 @@ const NetworkWindow = () => {
             lineWidth: 2
           }
         };
+      } else if (type === "comm") {
+        const { payload, sessionid } = data;
+        edge.style = {
+          label: {
+            value: ` ${formatText("app.network.Comm")} ${sessionid}\n${payload}`,
+            fill: "#e8b339",
+            fontSize: 14
+          },
+          keyshape: {
+            stroke: "#7c5914",
+            lineWidth: 3
+          },
+          animate: {
+            type: "circle-running",
+            color: "#e8b339",
+            repeat: true,
+            duration: 4000
+          }
+        };
       }
     });
 
@@ -460,10 +486,11 @@ const NetworkWindow = () => {
       width={window.innerWidth / 10 * 8}
       data={data}
       theme={{ mode: "dark" }}
+      fitView={true}
       layout={{
         type: "dagre",
-        rankdir: "LR",
-        align: "DL",
+        rankdir: "RL",
+        align: "DR",
         ranksepFunc: ranksepFunc
       }}
     >
@@ -475,4 +502,3 @@ const NetworkWindow = () => {
 
 export const NetworkMemo = memo(Network);
 export const NetworkWindowMemo = memo(NetworkWindow);
-export default NetworkMemo;
